@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Generator
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, PropertyMock, patch
+from zoneinfo import ZoneInfo
 
 from freezegun.api import FrozenDateTimeFactory
 import pytest
@@ -43,6 +44,7 @@ from .const import (
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
+PARIS = ZoneInfo("Europe/Paris")
 
 pytest_plugins = ["pytest_homeassistant_custom_component"]
 
@@ -160,6 +162,9 @@ class FakeTelemetry:
         """Initialize with no override."""
         self.overrides: dict[datetime, EnergyReading | None] = {}
         self.horizon: datetime | None = None
+        # Corrupted hourly buckets: served by the hourly granularity only, the
+        # daily totals stay right (what the real portal does).
+        self.corruptions: dict[datetime, EnergyReading] = {}
         self.calls: list[tuple[Granularity, datetime, datetime]] = []
 
     def reading(self, hour: datetime) -> EnergyReading | None:
@@ -177,15 +182,54 @@ class FakeTelemetry:
         start: datetime,
         end: datetime,
     ) -> list[EnergyReading]:
-        """Mimic EdfEnrClient.async_get_energy for the hourly granularity."""
+        """Mimic EdfEnrClient.async_get_energy (hourly and daily granularities)."""
         self.calls.append((granularity, start, end))
-        assert granularity is Granularity.HOURLY
+        assert granularity in (Granularity.HOURLY, Granularity.DAILY)
+        if granularity is Granularity.DAILY:
+            return self._daily(start, end)
         readings = []
         hour = start.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
         while hour < end:
             if hour >= start and (reading := self.reading(hour)) is not None:
-                readings.append(reading)
+                readings.append(self.corruptions.get(hour, reading))
             hour += timedelta(hours=1)
+        return readings
+
+    def _daily(self, start: datetime, end: datetime) -> list[EnergyReading]:
+        """Return the sum of the hourly readings of each local (Paris) day."""
+        first = start.astimezone(PARIS).date()
+        last = end.astimezone(PARIS).date()
+        readings = []
+        day = first
+        while day <= last:
+            midnight = datetime.combine(day, time(), PARIS).astimezone(UTC)
+            if start <= midnight < end:
+                hours = [
+                    reading
+                    for offset in range(25)
+                    if (hour := midnight + timedelta(hours=offset))
+                    < datetime.combine(day + timedelta(days=1), time(), PARIS)
+                    and (reading := self.reading(hour)) is not None
+                ]
+                if hours:
+                    readings.append(
+                        EnergyReading(
+                            start=midnight,
+                            granularity=Granularity.DAILY,
+                            **{
+                                field: round(
+                                    sum(getattr(r, field) or 0.0 for r in hours), 3
+                                )
+                                for field in (
+                                    "solar_production",
+                                    "self_consumption",
+                                    "grid_import",
+                                    "ecs_consumption",
+                                )
+                            },
+                        )
+                    )
+            day += timedelta(days=1)
         return readings
 
 

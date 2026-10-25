@@ -38,7 +38,13 @@ from homeassistant.helpers.recorder import get_instance
 from homeassistant.util import dt as dt_util
 from homeassistant.util.unit_conversion import EnergyConverter
 
-from .api import EdfEnrClient, EdfEnrError, EnergyReading, Granularity
+from .api import (
+    EdfEnrClient,
+    EdfEnrError,
+    EnergyLimits,
+    EnergyReading,
+    async_get_hourly_energy,
+)
 from .const import (
     DOMAIN,
     INTEGRATION_NAME,
@@ -185,14 +191,17 @@ class EdfEnrStatisticsImporter:
         pv_number: str,
         *,
         history_start: datetime | None,
+        limits: EnergyLimits,
     ) -> None:
         """Initialize the importer.
 
-        ``history_start`` is the commissioning date, if the portal knows it.
+        ``history_start`` is the commissioning date, if the portal knows it;
+        ``limits`` reject the impossible values the portal sometimes reports.
         """
         self._hass = hass
         self._client = client
         self._pv_number = pv_number
+        self._limits = limits
         # Without a commissioning date the start is a guess, moving at each setup.
         self._history_start_known = history_start is not None
         self._history_start = floor_hour(
@@ -311,8 +320,8 @@ class EdfEnrStatisticsImporter:
         for index, (chunk_start, chunk_end) in enumerate(iter_chunks(fetch_start, end)):
             if index:
                 await asyncio.sleep(FETCH_PAUSE)
-            readings = await self._client.async_get_energy(
-                self._pv_number, Granularity.HOURLY, chunk_start, chunk_end
+            readings = await async_get_hourly_energy(
+                self._client, self._pv_number, chunk_start, chunk_end, self._limits
             )
             hourly = [aggregate_hourly(readings, plan.series) for plan in plans]
             if not started:

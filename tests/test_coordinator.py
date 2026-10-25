@@ -165,14 +165,34 @@ async def test_scheduled_refresh_updates_sensors(
     telemetry.horizon = dt_util.utcnow()
     before = float(_state(hass, "solar_production_today"))
     telemetry.overrides[datetime(2026, 10, 24, 9, 0, tzinfo=UTC)] = _reading(
-        10.0, 1.0, 0.0
+        3.0, 1.0, 0.0
     )
 
     await _tick(hass, freezer, UPDATE_INTERVAL)
 
     assert init_integration.runtime_data.last_update_success
     after = float(_state(hass, "solar_production_today"))
-    assert after == pytest.approx(before - 0.4 + 10.0)
+    assert after == pytest.approx(before - 0.4 + 3.0)
+
+
+async def test_corrupted_hour_does_not_reach_today_sensors(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    mock_config_entry: MockConfigEntry,
+    mock_statistics_pause: None,
+    telemetry: FakeTelemetry,
+) -> None:
+    """A meter index in the current day is replaced using the daily total."""
+    corrupted = datetime(2026, 10, 24, 11, 0, tzinfo=UTC)
+    telemetry.corruptions[corrupted] = _reading(6790829.9, 0.6, 0.0)
+    mock_config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    # 0.4 + 1.1 + 2.0 + 2.5 kWh from 09:00 to 12:00 UTC (the profile).
+    assert float(_state(hass, "solar_production_today")) == pytest.approx(6.0)
+    granularities = [call[0] for call in telemetry.calls]
+    assert Granularity.DAILY in granularities
 
 
 async def test_refresh_error_then_recovery(

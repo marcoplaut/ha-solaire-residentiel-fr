@@ -427,10 +427,10 @@ async def test_full_import_overwrites_existing_rows(
     telemetry: FakeTelemetry,
 ) -> None:
     old_hour = COMMISSIONING_DATE + 5 * HOUR
-    telemetry.overrides[old_hour] = reading(old_hour, 10.0, grid_import=0.6)
+    telemetry.overrides[old_hour] = reading(old_hour, 3.0, grid_import=0.6)
     await importer_of(init_integration).async_import(full=True)
     rows = {row["start"]: row for row in await get_rows(hass, "solar_production")}
-    assert rows[old_hour]["state"] == 10.0
+    assert rows[old_hour]["state"] == 3.0
     assert_consistent(list(rows.values()))
 
 
@@ -711,3 +711,63 @@ async def test_series_reported_late_starts_with_the_others(
         sum(expected_values("grid_import", window_start, floor_hour(NOW)))
     )
     assert_consistent(rows)
+
+
+# ------------------------------------------------------------ impossible values
+
+
+async def test_corrupted_hours_are_replaced_by_their_share_of_the_day(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    mock_config_entry: MockConfigEntry,
+    mock_statistics_pause: None,
+    telemetry: FakeTelemetry,
+) -> None:
+    # A meter index, then a value in Wh, while the day total stays right.
+    spike = datetime(2026, 10, 23, 11, tzinfo=UTC)
+    tail = spike + HOUR
+    for hour, value in ((spike, 6790829.9), (tail, 378.0)):
+        original = hourly_profile(hour)
+        telemetry.corruptions[hour] = reading(
+            hour,
+            value,
+            self_consumption=original.self_consumption,
+            grid_import=original.grid_import,
+        )
+    mock_config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    rows = await get_rows(hass, "solar_production")
+    assert_consistent(rows)
+    states = {row["start"]: row["state"] for row in rows}
+    # The profile produces 2.0 and 2.5 kWh in these hours: the day's excess is
+    # shared equally.
+    assert states[spike] == pytest.approx(2.25)
+    assert states[tail] == pytest.approx(2.25)
+    assert max(states.values()) < 3
+    # The total of the history is the portal's.
+    values = expected_values("solar_production", COMMISSIONING_DATE, floor_hour(NOW))
+    assert rows[-1]["sum"] == pytest.approx(sum(values), abs=0.01)
+    # The other series are not affected.
+    assert [row["state"] for row in await get_rows(hass, "grid_import")] == (
+        pytest.approx(
+            expected_values("grid_import", COMMISSIONING_DATE, floor_hour(NOW))
+        )
+    )
+    assert [call[0] for call in telemetry.calls].count(Granularity.DAILY) >= 1
+    daily = next(call for call in telemetry.calls if call[0] is Granularity.DAILY)
+    # The local day 2026-10-23 (Paris summer time).
+    assert daily[1:] == (
+        datetime(2026, 10, 22, 22, tzinfo=UTC),
+        datetime(2026, 10, 23, 22, tzinfo=UTC),
+    )
+
+
+async def test_clean_import_never_requests_the_daily_totals(
+    init_integration: MockConfigEntry, telemetry: FakeTelemetry
+) -> None:
+    await importer_of(init_integration).async_import()
+
+    assert telemetry.calls
+    assert {call[0] for call in telemetry.calls} == {Granularity.HOURLY}

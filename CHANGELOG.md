@@ -5,6 +5,15 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-25
+
+### Fixed
+
+- Corrupted hours published by the portal (meter index instead of the energy of the hour, or values
+  in Wh) no longer end up in the statistics and "today" sensors: impossible values are rejected and
+  replaced using the portal's daily total. After updating, run the action
+  `edf_enr.reimport_statistics` to repair statistics imported by 0.1.0.
+
 ## [0.1.0] - 2026-10-25
 
 First release.

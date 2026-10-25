@@ -21,6 +21,8 @@ and self consumption into Home Assistant long-term statistics, ready for the **E
 - Hourly energy statistics for the Energy dashboard: solar production, grid import, grid injection,
   self consumption and home consumption.
 - Full history back-fill on first setup, and automatic correction of late or revised measurements.
+- Protection against the corrupted hours the portal sometimes publishes (see
+  [Data quality](#data-quality)).
 - "Today" sensors for display (energy and self consumption / self sufficiency rates).
 - Monitoring gateway diagnostics (last report, status) and installed peak power.
 - Several installations per account, one config entry per installation.
@@ -129,6 +131,18 @@ if an import is already running.
 
 The integration polls the portal every **30 minutes**. The portal exposes 10-minute buckets with a
 short delay, so polling faster would only load an unofficial API without giving fresher data.
+
+## Data quality
+
+The portal occasionally publishes corrupted hours, typically right after a monitoring gateway
+reset: a meter index instead of the energy of the hour (millions of kWh), then a few hours in Wh
+instead of kWh. Stored as is, a single such hour would ruin the Energy dashboard totals for good.
+
+Any hourly value above what the installation can physically measure (1.5 × its peak power for
+production and self consumption, 36 kW — the highest residential grid connection — for grid
+import) is rejected. The integration then reads the portal's daily total of that day, which stays
+right, and spreads what it has in excess of the accepted hours over the rejected ones. The energy
+of the day is preserved; only its distribution within those hours is approximated.
 
 ## Known limitations
 

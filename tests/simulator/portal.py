@@ -7,6 +7,8 @@ It reproduces what was observed on the real portal:
   code exchange, rotating refresh tokens, short-lived access tokens;
 * telemetry with naive Europe/Paris timestamps carrying a bogus "Z", an
   inclusive end bound, and negative placeholders for buckets not reported yet;
+* corrupted hourly buckets (meter index, values in Wh) while the daily totals
+  stay right;
 * failure injection (HTTP errors, rate limiting, token revocation, password
   change) to exercise the integration end to end.
 """
@@ -98,6 +100,9 @@ class PortalSimulator:
     horizon: datetime | None = None
     # Per naive local hour overrides of the profile.
     overrides: dict[datetime, dict[str, float]] = field(default_factory=dict)
+    # Per naive local hour corrupted values, served by the hourly endpoint only
+    # (the daily totals stay right, like on the real portal).
+    corruptions: dict[datetime, dict[str, float]] = field(default_factory=dict)
     # Injected failures: path fragment -> list of statuses returned in order.
     failures: dict[str, list[int]] = field(default_factory=dict)
     retry_after: str | None = None
@@ -376,20 +381,48 @@ class PortalSimulator:
             return dict.fromkeys(profile(local), PLACEHOLDER)
         return self.overrides.get(local, profile(local))
 
+    def daily_bucket(self, local_day: datetime) -> dict[str, float]:
+        """Return the energies of a day: the sum of its reported hour buckets."""
+        totals = dict.fromkeys(profile(local_day), 0.0)
+        for hour in range(24):
+            energies = self.bucket(local_day + timedelta(hours=hour))
+            if PLACEHOLDER in energies.values():
+                continue
+            for key, value in energies.items():
+                totals[key] += value
+        return {key: round(value, 3) for key, value in totals.items()}
+
     async def _energy(self, request: web.Request) -> web.Response:
         pv_number = request.match_info["pv"]
         self._authorized_pv(request, pv_number)
-        if request.match_info["granularity"] != "hourly":
-            raise web.HTTPBadRequest(text="only hourly is simulated")
+        granularity = request.match_info["granularity"]
+        if granularity not in ("hourly", "daily"):
+            raise web.HTTPBadRequest(text="only hourly and daily are simulated")
+        unit = "hour" if granularity == "hourly" else "day"
         try:
-            begin = _parse_naive(request.query["begin-hour"])
-            end = _parse_naive(request.query["end-hour"])
+            begin = _parse_naive(request.query[f"begin-{unit}"])
+            end = _parse_naive(request.query[f"end-{unit}"])
         except (KeyError, ValueError) as err:
             raise web.HTTPBadRequest(text="bad range") from err
         now_local = dt_util.utcnow().astimezone(PARIS).replace(tzinfo=None)
         items = []
-        local = begin.replace(minute=0, second=0, microsecond=0)
         # Naive wall-clock iteration, inclusive end, like the real portal.
+        if granularity == "daily":
+            local = begin.replace(hour=0, minute=0, second=0, microsecond=0)
+            while local <= end and local <= now_local:
+                items.append(
+                    {
+                        "day": local.strftime("%Y-%m-%d"),
+                        "dateStart": local.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "dateEnd": (local + timedelta(days=1)).strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        ),
+                        "energies": self.daily_bucket(local),
+                    }
+                )
+                local += timedelta(days=1)
+            return web.json_response({"dailyElecEnergies": items})
+        local = begin.replace(minute=0, second=0, microsecond=0)
         while local <= end and local <= now_local:
             items.append(
                 {
@@ -398,7 +431,7 @@ class PortalSimulator:
                     "dateEnd": (local + timedelta(hours=1)).strftime(
                         "%Y-%m-%dT%H:%M:%SZ"
                     ),
-                    "energies": self.bucket(local),
+                    "energies": self.corruptions.get(local, self.bucket(local)),
                     "analyzes": {"autoConsumptionPercentage": 0, "coverPercentage": 0},
                 }
             )

@@ -20,11 +20,12 @@ from .api import (
     EdfEnrError,
     EdfEnrNotFoundError,
     EdfEnrRateLimitError,
+    EnergyLimits,
     EnergyReading,
     Equipment,
-    Granularity,
     Installation,
     Project,
+    async_get_hourly_energy,
 )
 from .const import CONF_PV_NUMBER, DOMAIN, LOGGER, UPDATE_INTERVAL
 from .statistics import EdfEnrStatisticsImporter
@@ -99,6 +100,7 @@ class EdfEnrCoordinator(DataUpdateCoordinator[EdfEnrData]):
     installation: Installation | None
     gateway_equipment: Equipment | None
     statistics: EdfEnrStatisticsImporter
+    limits: EnergyLimits
     device_id: str
 
     def __init__(
@@ -141,22 +143,25 @@ class EdfEnrCoordinator(DataUpdateCoordinator[EdfEnrData]):
             self.gateway_equipment = next(
                 (e for e in equipments if e.type == GATEWAY_EQUIPMENT_TYPE), None
             )
+        self.limits = EnergyLimits.for_installation(project.installed_power_kwp)
         self.statistics = EdfEnrStatisticsImporter(
             self.hass,
             self.client,
             self.pv_number,
             history_start=project.commissioning_date,
+            limits=self.limits,
         )
 
     async def _async_update_data(self) -> EdfEnrData:
         """Fetch today's hourly energy and the gateway status."""
         day_start = dt_util.start_of_local_day()
         readings = await self._call(
-            lambda: self.client.async_get_energy(
+            lambda: async_get_hourly_energy(
+                self.client,
                 self.pv_number,
-                Granularity.HOURLY,
                 day_start,
                 day_start + timedelta(days=1),
+                self.limits,
             )
         )
         # The import only needs the telemetry: a failing gateway status (a

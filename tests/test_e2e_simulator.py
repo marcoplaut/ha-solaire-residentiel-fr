@@ -178,7 +178,13 @@ async def assert_statistics_match_portal(
     simulator: PortalSimulator,
     end: datetime,
     start: datetime = COMMISSIONING,
+    unchecked: frozenset[datetime] = frozenset(),
 ) -> None:
+    """Compare the stored hourly states with the portal's buckets.
+
+    The states of the ``unchecked`` hours (corrupted buckets, rebuilt from the
+    daily totals) are not compared, but the sums must still accumulate them.
+    """
     for series in SERIES:
         rows = await stored_rows(hass, series.key, start)
         reported = expected_hourly(simulator, series.key, start, end)
@@ -188,8 +194,10 @@ async def assert_statistics_match_portal(
             start + i * HOUR: reported.get(start + i * HOUR, 0.0) for i in range(hours)
         }
         assert [row["start"] for row in rows] == list(expected), series.key
-        assert [row["state"] for row in rows] == pytest.approx(
-            list(expected.values())
+        assert [row["state"] for row in rows if row["start"] not in unchecked] == (
+            pytest.approx(
+                [value for hour, value in expected.items() if hour not in unchecked]
+            )
         ), series.key
         running = 0.0
         for row in rows:
@@ -377,11 +385,47 @@ async def test_late_and_revised_data_reach_the_statistics(
     # It catches up, and the portal revises yesterday's noon production.
     portal.horizon = None
     revised = datetime(2026, 10, 23, 14)  # noqa: DTZ001 - naive portal label
-    portal.overrides[revised] = {**profile(revised), "solarProduction": 9.0}
+    portal.overrides[revised] = {**profile(revised), "solarProduction": 3.5}
     await tick(hass, frozen_time, UPDATE_INTERVAL)
 
     await assert_statistics_match_portal(
         hass, portal, floor_hour(NOW + UPDATE_INTERVAL)
+    )
+
+
+async def test_corrupted_buckets_are_rebuilt_from_the_daily_total(
+    hass: HomeAssistant, portal: PortalSimulator
+) -> None:
+    # A meter index and a value in Wh instead of the energy of two hours of
+    # 2026-10-23, whose daily total stays right (the simulated installation
+    # is 3 kWp: 4.5 kWh per hour at most).
+    portal.commissioning_date = "2026-10-22T00:00:00Z"
+    day = datetime(2026, 10, 23)  # noqa: DTZ001 - naive portal label
+    corrupted_hours = [day + 14 * HOUR, day + 15 * HOUR]
+    for local, value in zip(corrupted_hours, (6790829.9, 378.0), strict=True):
+        portal.corruptions[local] = {**profile(local), "solarProduction": value}
+    await setup_entry(hass)
+
+    await assert_statistics_match_portal(
+        hass,
+        portal,
+        floor_hour(NOW),
+        datetime(2026, 10, 22, tzinfo=UTC),
+        frozenset(local_hour_to_utc(local) for local in corrupted_hours),
+    )
+    rows = await stored_rows(
+        hass, "solar_production", datetime(2026, 10, 22, tzinfo=UTC)
+    )
+    assert max(row["state"] for row in rows) <= 4.5
+    # The Paris day adds up to the portal's daily total.
+    day_start = local_hour_to_utc(day)
+    stored = sum(
+        row["state"]
+        for row in rows
+        if day_start <= row["start"] < day_start + 24 * HOUR
+    )
+    assert stored == pytest.approx(
+        portal.daily_bucket(day)["solarProduction"], abs=0.002
     )
 
 
