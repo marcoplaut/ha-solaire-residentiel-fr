@@ -1,0 +1,8 @@
+{
+  "name": "Solaire Résidentiel FR",
+  "content_in_root": false,
+  "zip_release": true,
+  "filename": "edf_enr.zip",
+  "render_readme": true,
+  "homeassistant": "2026.10.0"
+}

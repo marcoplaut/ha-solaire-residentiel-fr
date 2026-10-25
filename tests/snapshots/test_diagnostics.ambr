@@ -1,0 +1,65 @@
+# serializer version: 1
+# name: test_diagnostics
+  dict({
+    'data': dict({
+      'gateway': dict({
+        'device_id': '**REDACTED**',
+        'last_reported_at': '2026-10-24T18:50:30+00:00',
+        'status': 'MisEnService',
+        'type': 'YuzeG1',
+      }),
+      'today': dict({
+        'grid_import': 6.8,
+        'grid_injection': 3.8,
+        'home_consumption': 9.0,
+        'self_consumption': 2.2,
+        'solar_production': 6.0,
+      }),
+    }),
+    'entry': dict({
+      'data': dict({
+        'email': '**REDACTED**',
+        'password': '**REDACTED**',
+        'pv_number': '**REDACTED**',
+      }),
+      'disabled_by': None,
+      'discovery_keys': dict({
+      }),
+      'domain': 'edf_enr',
+      'minor_version': 1,
+      'options': dict({
+      }),
+      'pref_disable_new_entities': False,
+      'pref_disable_polling': False,
+      'source': 'user',
+      'subentries': list([
+      ]),
+      'title': '**REDACTED**',
+      'unique_id': '**REDACTED**',
+      'version': 1,
+    }),
+    'gateway_equipment': dict({
+      'brand': 'Fournisseur solaire',
+      'equipment_id': '**REDACTED**',
+      'last_connection': '2026-10-24T18:50:30+00:00',
+      'sub_type': 'YuzeG1',
+      'type': 'Passerelle',
+    }),
+    'installation': dict({
+      'installation_id': '**REDACTED**',
+      'pv_number': '**REDACTED**',
+    }),
+    'last_update_success': True,
+    'project': dict({
+      'commissioning_date': '2026-10-20T00:00:00+00:00',
+      'installed_power_kwp': 3.96,
+      'name': '**REDACTED**',
+      'offer_name': 'Mon Soleil & Moi toiture V3.1',
+      'pv_number': '**REDACTED**',
+    }),
+    'statistics': dict({
+      'running': False,
+      'series': 5,
+    }),
+  })
+# ---

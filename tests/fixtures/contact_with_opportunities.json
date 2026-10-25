@@ -1,0 +1,35 @@
+{
+  "objectId": "11111111-2222-3333-4444-555555555555",
+  "opportunities": [
+    {
+      "objectId": "opp-1",
+      "pvNumber": "PV0000042",
+      "name": "Jane Doe - PV0000042",
+      "offer": {
+        "objectId": "offer-1",
+        "name": "Mon Soleil & Moi toiture V3.1",
+        "monitoringType": 4
+      },
+      "powerInstallation": 3.96,
+      "b2CCommissioningDate": "2024-05-14T22:00:00Z",
+      "projectStage": "8",
+      "token": "header.eyJwYXlsb2FkIjp7ImYiOjB9fQ.signature"
+    },
+    {
+      "objectId": "opp-2",
+      "pvNumber": "PV0000042",
+      "name": "Jane Doe - battery upsell",
+      "offer": {"objectId": "offer-2", "name": "Batterie", "monitoringType": 4},
+      "powerInstallation": null,
+      "b2CCommissioningDate": null
+    },
+    {
+      "objectId": "opp-3",
+      "pvNumber": null,
+      "name": "Lead without project"
+    }
+  ],
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "emailAddress": "jane.doe@example.com"
+}

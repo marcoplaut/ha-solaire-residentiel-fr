@@ -1,0 +1,19 @@
+{
+  "entity": {
+    "sensor": {
+      "solar_production_today": { "default": "mdi:solar-power-variant" },
+      "grid_import_today": { "default": "mdi:transmission-tower-import" },
+      "grid_injection_today": { "default": "mdi:transmission-tower-export" },
+      "self_consumption_today": { "default": "mdi:home-lightning-bolt" },
+      "home_consumption_today": { "default": "mdi:home-import-outline" },
+      "self_consumption_rate_today": { "default": "mdi:solar-power" },
+      "self_sufficiency_rate_today": { "default": "mdi:home-battery" },
+      "installed_power": { "default": "mdi:solar-panel-large" },
+      "gateway_last_report": { "default": "mdi:router-network" },
+      "gateway_status": { "default": "mdi:list-status" }
+    }
+  },
+  "services": {
+    "reimport_statistics": { "service": "mdi:database-refresh" }
+  }
+}

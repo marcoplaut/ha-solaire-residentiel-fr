@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build and upload edf_enr.zip
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set the manifest version from the tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="${TAG#v}"
+          jq --arg v "$version" '.version = $v' custom_components/edf_enr/manifest.json > manifest.tmp
+          mv manifest.tmp custom_components/edf_enr/manifest.json
+          echo "Releasing version $version"
+      - name: Zip the integration
+        working-directory: custom_components/edf_enr
+        run: zip -r "$GITHUB_WORKSPACE/edf_enr.zip" . -x "__pycache__/*" "*/__pycache__/*" "*.pyc"
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" edf_enr.zip --clobber --repo "$GITHUB_REPOSITORY"

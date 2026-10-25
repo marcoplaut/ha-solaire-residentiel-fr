@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "installation": {
+        "idInstallation": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "dateCreation": "2024-05-01T09:50:25.000Z",
+        "projets": [{"numeroProjet": "PV0000042"}]
+      },
+      "match": {"field": "NumeroProjet", "value": "PV0000042"}
+    }
+  ],
+  "pageNumber": 1,
+  "totalCount": 1,
+  "totalPages": 1
+}

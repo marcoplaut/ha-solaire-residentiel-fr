@@ -1,0 +1,25 @@
+{
+  "hourlyElecEnergies": [
+    {
+      "hour": "2026-07-15:12.00.00",
+      "dateStart": "2026-07-15T12:00:00Z",
+      "dateEnd": "2026-07-15T13:00:00Z",
+      "energies": {"ecsConsumption": 0.0, "solarProduction": 2.39, "autoConsumption": 1.2, "networkConsumption": 0.1},
+      "analyzes": {"autoConsumptionPercentage": 50.21, "coverPercentage": 92.31}
+    },
+    {
+      "hour": "2026-07-15:13.00.00",
+      "dateStart": "2026-07-15T13:00:00Z",
+      "dateEnd": "2026-07-15T14:00:00Z",
+      "energies": {"ecsConsumption": 0.0, "solarProduction": 2.9, "autoConsumption": 0.95, "networkConsumption": 0.0},
+      "analyzes": {"autoConsumptionPercentage": 32.76, "coverPercentage": 100.0}
+    },
+    {
+      "hour": "2026-07-15:14.00.00",
+      "dateStart": "2026-07-15T14:00:00Z",
+      "dateEnd": "2026-07-15T15:00:00Z",
+      "energies": {"ecsConsumption": 0.0, "solarProduction": -34604.208, "autoConsumption": -27682.148, "networkConsumption": -85335.024},
+      "analyzes": {"autoConsumptionPercentage": 0.0, "coverPercentage": 0.0}
+    }
+  ]
+}

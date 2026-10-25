@@ -1,0 +1,20 @@
+{
+  "idInstallation": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+  "nombreEquipements": 2,
+  "equipements": [
+    {
+      "type": "Passerelle",
+      "idEquipement": "000042|yuzeg1",
+      "sousType": "YuzeG1",
+      "marque": "Fournisseur solaire",
+      "dateDerniereConnexion": "2026-10-24T18:50:30.000Z"
+    },
+    {
+      "type": "Chauffe-eau",
+      "idEquipement": "ffffffff-0000-1111-2222-333333333333",
+      "sousType": "NONE",
+      "marque": "Inconnue",
+      "dateDerniereConnexion": null
+    }
+  ]
+}

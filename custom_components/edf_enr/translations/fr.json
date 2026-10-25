@@ -1,0 +1,118 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Compte de l'espace client solaire",
+        "description": "Connectez-vous avec les identifiants de l'espace client de votre offre solaire résidentielle (le site où vous suivez votre production).",
+        "data": {
+          "email": "E-mail",
+          "password": "Mot de passe"
+        },
+        "data_description": {
+          "email": "Adresse e-mail utilisée pour se connecter à l'espace client.",
+          "password": "Mot de passe de l'espace client."
+        }
+      },
+      "project": {
+        "title": "Installation solaire",
+        "description": "Votre compte comporte plusieurs installations solaires. Choisissez celle à ajouter ; relancez la configuration pour ajouter les autres.",
+        "data": {
+          "pv_number": "Installation"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconnexion",
+        "description": "Les identifiants de l'installation {pv_number} ont été refusés. Saisissez-les à nouveau.",
+        "data": {
+          "email": "E-mail",
+          "password": "Mot de passe"
+        },
+        "data_description": {
+          "email": "Adresse e-mail utilisée pour se connecter à l'espace client.",
+          "password": "Mot de passe de l'espace client."
+        }
+      },
+      "reconfigure": {
+        "title": "Modifier les identifiants",
+        "description": "Modifiez les identifiants utilisés pour l'installation {pv_number}.",
+        "data": {
+          "email": "E-mail",
+          "password": "Mot de passe"
+        },
+        "data_description": {
+          "email": "Adresse e-mail utilisée pour se connecter à l'espace client.",
+          "password": "Mot de passe de l'espace client."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter à l'espace client.",
+      "invalid_auth": "E-mail ou mot de passe incorrect.",
+      "no_projects": "Aucune installation solaire n'a été trouvée sur ce compte.",
+      "unknown": "Erreur inattendue."
+    },
+    "abort": {
+      "already_configured": "Toutes les installations de ce compte sont déjà configurées.",
+      "reauth_successful": "La reconnexion a réussi.",
+      "reconfigure_successful": "La reconfiguration a réussi.",
+      "wrong_account": "Ce compte ne donne pas accès à l'installation {pv_number}."
+    }
+  },
+  "device": {
+    "gateway": {
+      "name": "Passerelle de suivi"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "solar_production_today": { "name": "Production solaire aujourd'hui" },
+      "grid_import_today": { "name": "Consommation réseau aujourd'hui" },
+      "grid_injection_today": { "name": "Injection réseau aujourd'hui" },
+      "self_consumption_today": { "name": "Autoconsommation aujourd'hui" },
+      "home_consumption_today": { "name": "Consommation foyer aujourd'hui" },
+      "self_consumption_rate_today": { "name": "Taux d'autoconsommation aujourd'hui" },
+      "self_sufficiency_rate_today": { "name": "Taux d'autoproduction aujourd'hui" },
+      "installed_power": { "name": "Puissance crête installée" },
+      "gateway_last_report": { "name": "Dernière remontée" },
+      "gateway_status": { "name": "État" }
+    }
+  },
+  "exceptions": {
+    "invalid_auth": {
+      "message": "Les identifiants de l'espace client ont été refusés."
+    },
+    "cannot_connect": {
+      "message": "Impossible de se connecter à l'espace client."
+    },
+    "rate_limited": {
+      "message": "L'espace client demande de ralentir ; nouvel essai plus tard."
+    },
+    "unexpected_response": {
+      "message": "Réponse inattendue de l'espace client : {error}"
+    },
+    "project_not_found": {
+      "message": "L'installation {pv_number} n'est plus visible sur ce compte."
+    },
+    "entry_not_found": {
+      "message": "Aucune entrée Solaire Résidentiel FR avec l'identifiant {entry_id}."
+    },
+    "entry_not_loaded": {
+      "message": "L'entrée {title} n'est pas chargée."
+    },
+    "import_in_progress": {
+      "message": "Un import de statistiques est déjà en cours pour cette installation."
+    }
+  },
+  "services": {
+    "reimport_statistics": {
+      "name": "Réimporter les statistiques",
+      "description": "Supprime les statistiques d'énergie importées d'une installation et réimporte tout l'historique, en arrière-plan.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Installation",
+          "description": "L'installation dont les statistiques sont reconstruites."
+        }
+      }
+    }
+  }
+}

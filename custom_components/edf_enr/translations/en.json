@@ -1,0 +1,118 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Solar customer area account",
+        "description": "Sign in with the credentials of the customer area of your residential solar offer (the web site where you follow your production).",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        },
+        "data_description": {
+          "email": "Email address used to sign in to the customer area.",
+          "password": "Password of the customer area."
+        }
+      },
+      "project": {
+        "title": "Solar installation",
+        "description": "Your account has several solar installations. Choose the one to add; repeat the setup to add the others.",
+        "data": {
+          "pv_number": "Installation"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Sign in again",
+        "description": "The credentials of installation {pv_number} were rejected. Enter them again.",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        },
+        "data_description": {
+          "email": "Email address used to sign in to the customer area.",
+          "password": "Password of the customer area."
+        }
+      },
+      "reconfigure": {
+        "title": "Update credentials",
+        "description": "Update the credentials used for installation {pv_number}.",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        },
+        "data_description": {
+          "email": "Email address used to sign in to the customer area.",
+          "password": "Password of the customer area."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the customer area.",
+      "invalid_auth": "Invalid email or password.",
+      "no_projects": "No solar installation was found on this account.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "All the installations of this account are already configured.",
+      "reauth_successful": "Re-authentication was successful.",
+      "reconfigure_successful": "Re-configuration was successful.",
+      "wrong_account": "This account does not give access to installation {pv_number}."
+    }
+  },
+  "device": {
+    "gateway": {
+      "name": "Monitoring gateway"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "solar_production_today": { "name": "Solar production today" },
+      "grid_import_today": { "name": "Grid import today" },
+      "grid_injection_today": { "name": "Grid injection today" },
+      "self_consumption_today": { "name": "Self consumption today" },
+      "home_consumption_today": { "name": "Home consumption today" },
+      "self_consumption_rate_today": { "name": "Self consumption rate today" },
+      "self_sufficiency_rate_today": { "name": "Self sufficiency rate today" },
+      "installed_power": { "name": "Installed peak power" },
+      "gateway_last_report": { "name": "Last report" },
+      "gateway_status": { "name": "Status" }
+    }
+  },
+  "exceptions": {
+    "invalid_auth": {
+      "message": "The customer area credentials were rejected."
+    },
+    "cannot_connect": {
+      "message": "Failed to connect to the customer area."
+    },
+    "rate_limited": {
+      "message": "The customer area asked to slow down; retrying later."
+    },
+    "unexpected_response": {
+      "message": "Unexpected response from the customer area: {error}"
+    },
+    "project_not_found": {
+      "message": "Installation {pv_number} is no longer visible on this account."
+    },
+    "entry_not_found": {
+      "message": "No Solaire Résidentiel FR entry with id {entry_id}."
+    },
+    "entry_not_loaded": {
+      "message": "The entry {title} is not loaded."
+    },
+    "import_in_progress": {
+      "message": "A statistics import is already running for this installation."
+    }
+  },
+  "services": {
+    "reimport_statistics": {
+      "name": "Re-import statistics",
+      "description": "Deletes the imported energy statistics of an installation and imports its whole history again, in the background.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Installation",
+          "description": "The installation whose statistics are rebuilt."
+        }
+      }
+    }
+  }
+}

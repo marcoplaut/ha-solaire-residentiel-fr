@@ -1,0 +1,20 @@
+{
+  "domain": "edf_enr",
+  "name": "Solaire Résidentiel FR",
+  "codeowners": [
+    "@marcoplaut"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "recorder"
+  ],
+  "documentation": "https://github.com/marcoplaut/ha-solaire-residentiel-fr",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/marcoplaut/ha-solaire-residentiel-fr/issues",
+  "loggers": [
+    "custom_components.edf_enr"
+  ],
+  "requirements": [],
+  "version": "0.1.0"
+}
